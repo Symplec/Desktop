@@ -1,85 +1,57 @@
-# dwm - dynamic window manager
+# st - simple terminal
 # See LICENSE file for copyright and license details.
+.POSIX:
 
-#==============================================================================
-# MAKE CONFIGURATION
+include config.mk
 
-#include config.mk
-# dwm version
-VERSION = 6.2
+SRC = st.c x.c
+OBJ = $(SRC:.c=.o)
 
-# Customize below to fit your system
+all: options st
 
-# paths
-PREFIX = /usr/local
-MANPREFIX = ${PREFIX}/share/man
+options:
+	@echo st build options:
+	@echo "CFLAGS  = $(STCFLAGS)"
+	@echo "LDFLAGS = $(STLDFLAGS)"
+	@echo "CC      = $(CC)"
 
-X11INC = /usr/X11R6/include
-X11LIB = /usr/X11R6/lib
-
-# Xinerama, comment if you don't want it
-XINERAMALIBS  = -lXinerama
-XINERAMAFLAGS = -DXINERAMA
-
-# freetype
-FREETYPELIBS = -lfontconfig -lXft
-FREETYPEINC = /usr/include/freetype2
-# OpenBSD (uncomment)
-#FREETYPEINC = ${X11INC}/freetype2
-
-# includes and libs
-INCS = -I${X11INC} -I${FREETYPEINC}
-LIBS = -L${X11LIB} -lX11 ${XINERAMALIBS} ${FREETYPELIBS} -lXrender
-
-# flags
-CPPFLAGS = -D_DEFAULT_SOURCE -D_BSD_SOURCE -D_POSIX_C_SOURCE=2 -DVERSION=\"${VERSION}\" ${XINERAMAFLAGS}
-#CFLAGS   = -g -std=c99 -pedantic -Wall -O0 ${INCS} ${CPPFLAGS}
-CFLAGS   = -std=c99 -pedantic -Wall -Wno-deprecated-declarations -Os ${INCS} ${CPPFLAGS}
-LDFLAGS  = ${LIBS}
-
-# Solaris
-#CFLAGS = -fast ${INCS} -DVERSION=\"${VERSION}\"
-#LDFLAGS = ${LIBS}
-
-# compiler and linker
-CC = cc
-
-#==============================================================================
-# PROJECT STATE
-
-SRC = dwm.c
-OBJ = ${SRC:.c=.o}
-
-#==============================================================================
-# INTERNAL TARGETS
+config.h:
+	cp config.def.h config.h
 
 .c.o:
-	${CC} -c ${CFLAGS} $<
+	$(CC) $(STCFLAGS) -c $<
 
-${OBJ}: dwm_config.h
+st.o: config.h st.h win.h
+x.o: arg.h config.h st.h win.h
 
-dwm: ${OBJ}
-	${CC} -o $@ ${OBJ} ${LDFLAGS}
+$(OBJ): config.h config.mk
 
-#==============================================================================
-# CALLABLE TARGETS
-
-.PHONY: all clean install uninstall
-
-all: dwm
+st: $(OBJ)
+	$(CC) -o $@ $(OBJ) $(STLDFLAGS)
 
 clean:
-	rm -f dwm ${OBJ} dwm-${VERSION}.tar.gz
+	rm -f st $(OBJ) st-$(VERSION).tar.gz
 
-install: all
-	mkdir -p ${DESTDIR}${PREFIX}/bin
-	cp -f dwm ${DESTDIR}${PREFIX}/bin
-	chmod 755 ${DESTDIR}${PREFIX}/bin/dwm
-	mkdir -p ${DESTDIR}${MANPREFIX}/man1
-	sed "s/VERSION/${VERSION}/g" < dwm.1 > ${DESTDIR}${MANPREFIX}/man1/dwm.1
-	chmod 644 ${DESTDIR}${MANPREFIX}/man1/dwm.1
+dist: clean
+	mkdir -p st-$(VERSION)
+	cp -R FAQ LEGACY TODO LICENSE Makefile README config.mk\
+		config.def.h st.info st.1 arg.h st.h win.h $(SRC)\
+		st-$(VERSION)
+	tar -cf - st-$(VERSION) | gzip > st-$(VERSION).tar.gz
+	rm -rf st-$(VERSION)
+
+install: st
+	mkdir -p $(DESTDIR)$(PREFIX)/bin
+	cp -f st $(DESTDIR)$(PREFIX)/bin
+	chmod 755 $(DESTDIR)$(PREFIX)/bin/st
+	mkdir -p $(DESTDIR)$(MANPREFIX)/man1
+	sed "s/VERSION/$(VERSION)/g" < st.1 > $(DESTDIR)$(MANPREFIX)/man1/st.1
+	chmod 644 $(DESTDIR)$(MANPREFIX)/man1/st.1
+	tic -sx st.info
+	@echo Please see the README file regarding the terminfo entry of st.
 
 uninstall:
-	rm -f ${DESTDIR}${PREFIX}/bin/dwm\
-		${DESTDIR}${MANPREFIX}/man1/dwm.1
+	rm -f $(DESTDIR)$(PREFIX)/bin/st
+	rm -f $(DESTDIR)$(MANPREFIX)/man1/st.1
 
+.PHONY: all options clean dist install uninstall

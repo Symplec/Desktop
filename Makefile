@@ -5,9 +5,8 @@
 # MAKE CONFIGURATION
 
 .POSIX:
+# st version
 VERSION = 0.8.2
-
-# Customize below to fit your system
 
 # paths
 PREFIX = /usr/local
@@ -31,15 +30,8 @@ STCPPFLAGS = -DVERSION=\"$(VERSION)\" -D_XOPEN_SOURCE=600
 STCFLAGS = $(INCS) $(STCPPFLAGS) $(CPPFLAGS) $(CFLAGS)
 STLDFLAGS = $(LIBS) $(LDFLAGS)
 
-# OpenBSD:
-#CPPFLAGS = -DVERSION=\"$(VERSION)\" -D_XOPEN_SOURCE=600 -D_BSD_SOURCE
-#LIBS = -L$(X11LIB) -lm -lX11 -lutil -lXft \
-#       `pkg-config --libs fontconfig` \
-#       `pkg-config --libs freetype2`
-
 # compiler and linker
-# CC = c99
-
+CC = cc
 
 #==============================================================================
 # PROJECT STATE
@@ -56,8 +48,8 @@ config.h:
 .c.o:
 	$(CC) $(STCFLAGS) -c $<
 
-st.o: config.h st.h win.h
-x.o: arg.h config.h st.h win.h
+st.o: config.h
+x.o: config.h
 
 $(OBJ): config.h
 
